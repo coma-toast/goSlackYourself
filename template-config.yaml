@@ -1,1 +1,14 @@
-slackToken: "123abc"
+SlackToken: "123abc"
+ChannelToMonitor: ""
+ChannelToMessage: ""
+TriggerWords:
+  [
+    "@here",
+    "leftover",
+    "pizza",
+    "bagel",
+    "sandwich",
+    "cake",
+    "ice cream",
+    "dessert",
+  ]

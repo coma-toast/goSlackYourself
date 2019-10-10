@@ -122,6 +122,14 @@ func handleError(err error) {
 
 // ! example end
 
+
+// import config:
+// token, channel to monitor, channel to message, trigger words
+// pull messages since last pull from monitored channel
+// see if any words are in the list from the message - some kind of string search
+// if match, copy message and release the vultures
+// rinse, repeat (while loop?)
+
 func main() {
 	conf = getConf()
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
