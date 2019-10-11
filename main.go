@@ -7,18 +7,17 @@ import (
 	"os"
 	"strconv"
 	"syscall"
-	"time"
 
-	"gitlab.jasondale.me/jdale/govult/slack"
+	"gitlab.jasondale.me/jdale/govult/pkg/slack"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 )
 
-// config is the configuration struct
+// Config is the configuration struct
 type config struct {
 	PidFilePath      string
 	SlackToken       string
-	BaseURL          string
 	ChannelToMonitor string
 	ChannelToMessage string
 	TriggerWords     []string
@@ -26,7 +25,8 @@ type config struct {
 
 // new config instance
 var (
-	conf *config
+	conf     *config
+	SlackAPI slack.Service
 )
 
 // Write a pid file, but first make sure it doesn't exist with a running pid.
@@ -97,37 +97,49 @@ func handleError(err error) {
 
 func main() {
 	conf = getConf()
+	// * SlackAPI is still a Service from slack package; slack.Client satisfies the Service requirements,
+	// * but SlackAPI will remain a slack.Service as it was declared up top.
+	SlackAPI = slack.Client{
+		Token:            conf.SlackToken,
+		ChannelToMonitor: conf.ChannelToMonitor,
+		ChannelToMessage: conf.ChannelToMessage,
+		// Oldest:           time.Now().Unix(),
+		Oldest: 0,
+	}
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
 	pid := alreadyRunning(pidPath)
 
 	if !pid {
 		// Infinite loop - get new messages every 5 seconds
-		for true {
-			messages := getNewSlackMessages()
-			for message := range messages {
-				keywordMatchedMessages := analyzeMessage(message)
-				for matchedMessage := range keywordMatchedMessages {
-					sendSlackMessage(matchedMessage)
-				}
+		// for true {
+		messages := getNewSlackMessages()
+		for _, message := range messages {
+			keywordMatchedMessages := analyzeMessage(message)
+			for _, matchedMessage := range keywordMatchedMessages {
+				fmt.Println("matchedMessage", matchedMessage)
+				// sendSlackMessage(matchedMessage)
 			}
-			time.Sleep(5 * time.Second)
+			// }
+			// time.Sleep(5 * time.Second)
 		}
 	}
 }
 
 // Get Slack messages since last check
-func getNewSlackMessages() string {
-	messages := slack.GetMessages("GET", "conversations.history", conf.ChannelToMonitor, nil)
+func getNewSlackMessages() []string {
+	messages, err := SlackAPI.GetMessages()
+	spew.Dump("messages ", messages)
+	fmt.Println("err", err)
 	return messages
 }
 
 // Check a message for a match to any of the keywords
 func analyzeMessage(message string) string {
-	fmt.Println("analyzeMessage" + message)
+	fmt.Println("analyzeMessage " + message)
 	return message
 }
 
 // Send a slack message to a channel
-func sendSlackMessage(message string, channel string) {
-	fmt.Println("sendSlackMessage" + message)
+func sendSlackMessage(message string) {
+	fmt.Println("sendSlackMessage " + message)
 }

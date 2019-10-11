@@ -1,5 +1,5 @@
 SlackToken: "123abc"
-BaseURL: "https://slack.com/api/"
+PidFilePath: "/home/user"
 ChannelToMonitor: ""
 ChannelToMessage: ""
 TriggerWords:
