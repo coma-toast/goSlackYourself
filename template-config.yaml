@@ -1,4 +1,5 @@
 SlackToken: "123abc"
+BaseURL: "https://slack.com/api/"
 ChannelToMonitor: ""
 ChannelToMessage: ""
 TriggerWords:

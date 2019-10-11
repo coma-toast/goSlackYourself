@@ -4,21 +4,24 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"syscall"
+	"time"
+
+	"gitlab.jasondale.me/jdale/govult/slack"
 
 	"github.com/spf13/viper"
 )
 
 // config is the configuration struct
 type config struct {
-	BaseURL     string
-	Words       []string
-	PidFilePath string
-	StartTime   string
-	SlackToken  string
+	PidFilePath      string
+	SlackToken       string
+	BaseURL          string
+	ChannelToMonitor string
+	ChannelToMessage string
+	TriggerWords     []string
 }
 
 // new config instance
@@ -78,50 +81,12 @@ func getConf() *config {
 	return conf
 }
 
-// ! example start
-	
-		// Start at the root folder of your choosing (i.e. Completed),
-		// recursively searching down, populating the files list
-	// 	files, err := getFilesFromFolder(conf.CompletedFolder)
-	// 	if err != nil {
-	// 		fmt.Println(fmt.Errorf("Error: %s", err))
-	// 		return
-	// 	}
-	// 	downloadFiles(files)
-	// 	deleteDownloaded(DeleteQueue)
-	// }
-// }
-
-// func apiCall(method string, id int, callType string) ([]byte, error) {
-// 	url := fmt.Sprintf("%s/%s", conf.BaseURL, callType)
-// 	if id != 0 {
-// 		url = fmt.Sprintf("%s/%d", url, id)
-// 	}
-// 	client := &http.Client{}
-// 	request, err := http.NewRequest(method, url, nil)
-// 	handleError(err)
-// 	request.SetBasicAuth(conf.Username, conf.Passwd)
-// 	response, err := client.Do(request)
-// 	handleError(err)
-// 	defer response.Body.Close()
-// 	data, err := ioutil.ReadAll(response.Body)
-// 	handleError(err)
-// 	// if response.StatusCode >= 400 {
-// 	log.Print(fmt.Errorf("Response Code Error: %d. %s", response.StatusCode, string(data)))
-
-// 	// }
-// 	return data, err
-// }
-
-//TODO: once errors are returned above, this is not needed
+//TODO: real error handling
 func handleError(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
-
-// ! example end
-
 
 // import config:
 // token, channel to monitor, channel to message, trigger words
@@ -134,17 +99,35 @@ func main() {
 	conf = getConf()
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
 	pid := alreadyRunning(pidPath)
-	messages := []string
 
-	// Infinite loop - get new messages every 5 seconds
-	for {
-		getNewSlackMessages()
-		time.Sleep(5 * time.Second)
+	if !pid {
+		// Infinite loop - get new messages every 5 seconds
+		for true {
+			messages := getNewSlackMessages()
+			for message := range messages {
+				keywordMatchedMessages := analyzeMessage(message)
+				for matchedMessage := range keywordMatchedMessages {
+					sendSlackMessage(matchedMessage)
+				}
+			}
+			time.Sleep(5 * time.Second)
+		}
 	}
+}
 
-	if !pid {}
+// Get Slack messages since last check
+func getNewSlackMessages() string {
+	messages := slack.GetMessages("GET", "conversations.history", conf.ChannelToMonitor, nil)
+	return messages
+}
 
-	words := getListOfTriggerWords()
-	food := analyzeMessages(words, messages)
-	releaseTheVultures(food)
+// Check a message for a match to any of the keywords
+func analyzeMessage(message string) string {
+	fmt.Println("analyzeMessage" + message)
+	return message
+}
+
+// Send a slack message to a channel
+func sendSlackMessage(message string, channel string) {
+	fmt.Println("sendSlackMessage" + message)
 }
