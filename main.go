@@ -127,7 +127,12 @@ func main() {
 					}
 					LastMessageTs = message.Ts
 				}
-				// keywordMatchedMessages := analyzeMessage(message)
+				keywordMatchedMessages := analyzeMessage(message.Text)
+				if len(response.Messages) > 0 {
+					for _, message := range response.Messages {
+						analyzeMessage(message.Text)
+					}
+				}
 				// for _, matchedMessage := range keywordMatchedMessages {
 				// 	fmt.Println("matchedMessage", matchedMessage)
 				// sendSlackMessage(matchedMessage)
@@ -142,11 +147,7 @@ func main() {
 // Get Slack messages since last check
 func getNewSlackMessages() (slack.Response, error) {
 	response, err := SlackAPI.GetMessages()
-	if len(response.Messages) > 0 {
-		for _, message := range response.Messages {
-			analyzeMessage(message.Text)
-		}
-	}
+
 	return response, err
 }
 

@@ -38,6 +38,13 @@ type Message struct {
 	Team        string `json:"team"`
 }
 
+// PostSlackMessage is the struct for posting messages to Slack
+type PostSlackMessage struct {
+	Token   string
+	Channel string
+	Text    string
+}
+
 var baseURL = "https://slack.com/api"
 
 // GetMessages gets Slack messages from a channel from a start time
