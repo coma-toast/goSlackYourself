@@ -11,7 +11,6 @@ import (
 
 	"gitlab.jasondale.me/jdale/govult/pkg/slack"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 )
 
@@ -104,21 +103,29 @@ func main() {
 		Token:            conf.SlackToken,
 		ChannelToMonitor: conf.ChannelToMonitor,
 		ChannelToMessage: conf.ChannelToMessage,
-		Oldest:           0,
+		Oldest:           "0",
 	}
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
 	pid := alreadyRunning(pidPath)
 
 	if !pid {
 		// Infinite loop - get new messages every 5 seconds
+		var LastMessageTs string
+		LastMessageTs = "0"
 		for true {
-			messages := getNewSlackMessages()
+			messages, err := getNewSlackMessages()
+			if err != nil {
+				fmt.Println("Error encountered: ", err)
+			}
 			for _, message := range messages.Messages {
-				SlackAPI = slack.Client{
-					Token:            conf.SlackToken,
-					ChannelToMonitor: conf.ChannelToMonitor,
-					ChannelToMessage: conf.ChannelToMessage,
-					Oldest:           messages[0].Message.Ts,
+				if message.Ts > LastMessageTs {
+					SlackAPI = slack.Client{
+						Token:            conf.SlackToken,
+						ChannelToMonitor: conf.ChannelToMonitor,
+						ChannelToMessage: conf.ChannelToMessage,
+						Oldest:           message.Ts,
+					}
+					LastMessageTs = message.Ts
 				}
 				// keywordMatchedMessages := analyzeMessage(message)
 				// for _, matchedMessage := range keywordMatchedMessages {
@@ -133,20 +140,23 @@ func main() {
 }
 
 // Get Slack messages since last check
-func getNewSlackMessages() slack.Response {
-	messages, err := SlackAPI.GetMessages()
-	spew.Dump("messages ", messages)
-	fmt.Println("err", err)
-	return messages
+func getNewSlackMessages() (slack.Response, error) {
+	response, err := SlackAPI.GetMessages()
+	if len(response.Messages) > 0 {
+		for _, message := range response.Messages {
+			analyzeMessage(message.Text)
+		}
+	}
+	return response, err
 }
 
 // Check a message for a match to any of the keywords
-func analyzeMessage(message slack.Message) slack.Message {
-	fmt.Println("analyzeMessage " + message.Text)
+func analyzeMessage(message string) string {
+	// fmt.Println("analyzeMessage " + message.Text)
 	return message
 }
 
 // Send a slack message to a channel
 func sendSlackMessage(message string) {
-	fmt.Println("sendSlackMessage " + message)
+	// fmt.Println("sendSlackMessage " + message)
 }

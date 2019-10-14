@@ -6,9 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 // Service is the Slack service
@@ -22,7 +19,7 @@ type Client struct {
 	Token            string
 	ChannelToMonitor string
 	ChannelToMessage string
-	Oldest           int64
+	Oldest           string
 }
 
 // Response is the all messages returned by the query
@@ -37,7 +34,7 @@ type Message struct {
 	Type        string `json:"type"`
 	Text        string `json:"text"`
 	User        string `json:"user"`
-	Ts          int64  `json:"ts"`
+	Ts          string `json:"ts"`
 	Team        string `json:"team"`
 }
 
@@ -45,8 +42,7 @@ var baseURL = "https://slack.com/api"
 
 // GetMessages gets Slack messages from a channel from a start time
 func (c Client) GetMessages() (Response, error) {
-	messages, err := c.slackCall("GET", "conversations.history", c.ChannelToMonitor, strconv.FormatInt(c.Oldest, 10), "")
-	spew.Dump("GetMessages ", messages)
+	messages, err := c.slackCall("GET", "conversations.history", c.ChannelToMonitor, c.Oldest, "")
 
 	return messages, err
 }
@@ -77,7 +73,7 @@ func (c Client) slackCall(method string, endpoint string, channel string, startT
 	request.URL.RawQuery = q.Encode()
 	response, err := client.Do(request)
 	handleError(err)
-	spew.Dump(request.URL.String())
+	// spew.Dump(request.URL.String())
 	defer response.Body.Close()
 	responseBody, err := ioutil.ReadAll(response.Body)
 	handleError(err)
