@@ -24,7 +24,7 @@ type Client struct {
 	Oldest           int64
 }
 
-var baseURL = "https://slack.com/api/"
+var baseURL = "https://slack.com/api"
 
 // GetMessages gets Slack messages from a channel from a start time
 func (c Client) GetMessages() ([]string, error) {
@@ -52,9 +52,12 @@ func (c Client) slackCall(method string, endpoint string, channel string, startT
 	handleError(err)
 	// add authorization header to the request
 
-	request.Header.Add("token", c.Token)
+	q := request.URL.Query()
+	q.Add("token", c.Token)
+	request.URL.RawQuery = q.Encode()
 	response, err := client.Do(request)
 	handleError(err)
+	spew.Dump(request.URL.String())
 	defer response.Body.Close()
 	responseBody, err := ioutil.ReadAll(response.Body)
 	handleError(err)
