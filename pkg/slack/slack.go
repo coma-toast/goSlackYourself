@@ -6,13 +6,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/davecgh/go-spew/spew"
 )
 
 // Service is the Slack service
 type Service interface {
-	GetMessages() ([]string, error)
+	GetMessages() (Response, error)
 	PostMessages([]string) error
 }
 
@@ -24,11 +25,27 @@ type Client struct {
 	Oldest           int64
 }
 
+// Response is the all messages returned by the query
+type Response struct {
+	Ok       bool      `json:"ok"`
+	Messages []Message `json:"messages"`
+}
+
+// Message is the individual message response
+type Message struct {
+	ClientMsgID string `json:"client_msg_id"`
+	Type        string `json:"type"`
+	Text        string `json:"text"`
+	User        string `json:"user"`
+	Ts          int64  `json:"ts"`
+	Team        string `json:"team"`
+}
+
 var baseURL = "https://slack.com/api"
 
 // GetMessages gets Slack messages from a channel from a start time
-func (c Client) GetMessages() ([]string, error) {
-	messages, err := c.slackCall("GET", "conversations.history", c.ChannelToMonitor, c.Oldest, "")
+func (c Client) GetMessages() (Response, error) {
+	messages, err := c.slackCall("GET", "conversations.history", c.ChannelToMonitor, strconv.FormatInt(c.Oldest, 10), "")
 	spew.Dump("GetMessages ", messages)
 
 	return messages, err
@@ -38,14 +55,14 @@ func (c Client) GetMessages() ([]string, error) {
 func (c Client) PostMessages(messages []string) error {
 	var err error
 	for _, message := range messages {
-		c.slackCall("POST", "/chat.postMessage", c.ChannelToMessage, 0, message)
+		c.slackCall("POST", "/chat.postMessage", c.ChannelToMessage, "0", message)
 	}
 
 	return err
 }
 
-func (c Client) slackCall(method string, endpoint string, channel string, startTime int64, data string) ([]string, error) {
-	var messageData []string
+func (c Client) slackCall(method string, endpoint string, channel string, startTime string, data string) (Response, error) {
+	var messageData Response
 	url := fmt.Sprintf("%s/%s", baseURL, endpoint)
 	client := &http.Client{}
 	request, err := http.NewRequest(method, url, nil)
@@ -53,7 +70,10 @@ func (c Client) slackCall(method string, endpoint string, channel string, startT
 	// add authorization header to the request
 
 	q := request.URL.Query()
+	q.Add("channel", channel)
 	q.Add("token", c.Token)
+	// q.Add("oldest", "1571013695")
+	q.Add("oldest", startTime)
 	request.URL.RawQuery = q.Encode()
 	response, err := client.Do(request)
 	handleError(err)

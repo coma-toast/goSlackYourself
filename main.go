@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"syscall"
+	"time"
 
 	"gitlab.jasondale.me/jdale/govult/pkg/slack"
 
@@ -103,30 +104,36 @@ func main() {
 		Token:            conf.SlackToken,
 		ChannelToMonitor: conf.ChannelToMonitor,
 		ChannelToMessage: conf.ChannelToMessage,
-		// Oldest:           time.Now().Unix(),
-		Oldest: 0,
+		Oldest:           0,
 	}
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
 	pid := alreadyRunning(pidPath)
 
 	if !pid {
 		// Infinite loop - get new messages every 5 seconds
-		// for true {
-		messages := getNewSlackMessages()
-		for _, message := range messages {
-			keywordMatchedMessages := analyzeMessage(message)
-			for _, matchedMessage := range keywordMatchedMessages {
-				fmt.Println("matchedMessage", matchedMessage)
+		for true {
+			messages := getNewSlackMessages()
+			for _, message := range messages.Messages {
+				SlackAPI = slack.Client{
+					Token:            conf.SlackToken,
+					ChannelToMonitor: conf.ChannelToMonitor,
+					ChannelToMessage: conf.ChannelToMessage,
+					Oldest:           messages[0].Message.Ts,
+				}
+				// keywordMatchedMessages := analyzeMessage(message)
+				// for _, matchedMessage := range keywordMatchedMessages {
+				// 	fmt.Println("matchedMessage", matchedMessage)
 				// sendSlackMessage(matchedMessage)
+				// }
 			}
-			// }
-			// time.Sleep(5 * time.Second)
+
+			time.Sleep(5 * time.Second)
 		}
 	}
 }
 
 // Get Slack messages since last check
-func getNewSlackMessages() []string {
+func getNewSlackMessages() slack.Response {
 	messages, err := SlackAPI.GetMessages()
 	spew.Dump("messages ", messages)
 	fmt.Println("err", err)
@@ -134,8 +141,8 @@ func getNewSlackMessages() []string {
 }
 
 // Check a message for a match to any of the keywords
-func analyzeMessage(message string) string {
-	fmt.Println("analyzeMessage " + message)
+func analyzeMessage(message slack.Message) slack.Message {
+	fmt.Println("analyzeMessage " + message.Text)
 	return message
 }
 
