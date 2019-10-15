@@ -11,6 +11,7 @@ import (
 
 	"gitlab.jasondale.me/jdale/govult/pkg/slack"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 )
 
@@ -18,6 +19,9 @@ import (
 type config struct {
 	PidFilePath      string
 	SlackToken       string
+	SlackBotToken    string
+	SlackUser        string
+	SlackWebHook     string
 	ChannelToMonitor string
 	ChannelToMessage string
 	TriggerWords     []string
@@ -100,7 +104,8 @@ func main() {
 	// * SlackAPI is still a Service from slack package; slack.Client satisfies the Service requirements,
 	// * but SlackAPI will remain a slack.Service as it was declared up top.
 	SlackAPI = slack.Client{
-		Token:            conf.SlackToken,
+		Token:            conf.SlackBotToken,
+		SlackWebHook:     conf.SlackWebHook,
 		ChannelToMonitor: conf.ChannelToMonitor,
 		ChannelToMessage: conf.ChannelToMessage,
 		Oldest:           "0",
@@ -112,40 +117,47 @@ func main() {
 		// Infinite loop - get new messages every 5 seconds
 		var LastMessageTs string
 		LastMessageTs = "0"
+		firstRun := true
 		for true {
-			messages, err := getNewSlackMessages()
+			messages, err := getSlackMessages()
 			if err != nil {
 				fmt.Println("Error encountered: ", err)
 			}
 			for _, message := range messages.Messages {
 				if message.Ts > LastMessageTs {
 					SlackAPI = slack.Client{
-						Token:            conf.SlackToken,
 						ChannelToMonitor: conf.ChannelToMonitor,
 						ChannelToMessage: conf.ChannelToMessage,
 						Oldest:           message.Ts,
+						SlackBotToken:    conf.SlackBotToken,
+						SlackUser:        conf.SlackUser,
+						SlackWebHook:     conf.SlackWebHook,
+						Token:            conf.SlackToken,
 					}
 					LastMessageTs = message.Ts
 				}
-				keywordMatchedMessages := analyzeMessage(message.Text)
-				if len(response.Messages) > 0 {
-					for _, message := range response.Messages {
-						analyzeMessage(message.Text)
-					}
-				}
+				spew.Dump("message: ", message)
+				// keywordMatchedMessages := analyzeMessage(message.Text)
+				// if len(message.Text) > 0 {
+				// 	analyzeMessage(message.Text)
+				// }
 				// for _, matchedMessage := range keywordMatchedMessages {
 				// 	fmt.Println("matchedMessage", matchedMessage)
 				// sendSlackMessage(matchedMessage)
 				// }
 			}
 
+			if !firstRun {
+				SlackAPI.PostMessage("second run")
+			}
+			firstRun = false
 			time.Sleep(5 * time.Second)
 		}
 	}
 }
 
-// Get Slack messages since last check
-func getNewSlackMessages() (slack.Response, error) {
+// Get Slack messages
+func getSlackMessages() (slack.Response, error) {
 	response, err := SlackAPI.GetMessages()
 
 	return response, err
