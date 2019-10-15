@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/davecgh/go-spew/spew"
 	// "github.com/davecgh/go-spew/spew"
 )
 
@@ -22,6 +24,7 @@ type Client struct {
 	ChannelToMessage string
 	Oldest           string
 	SlackBotToken    string
+	SlackToken       string
 	SlackUser        string
 	SlackWebHook     string
 	Token            string
@@ -73,18 +76,12 @@ func (c Client) slackPost(message string) error {
 		Text:    message,
 		Channel: c.ChannelToMessage,
 	}
-	// spew.Dump(data)
-	// data.Set("text", message)
-	// data.Set("channel", c.ChannelToMessage)
 	jsonData, err := json.Marshal(data)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", c.SlackWebHook, bytes.NewBuffer(jsonData))
 	req.Header.Add("Authorization", bearer)
 	req.Header.Add("Content-Type", "application/json")
-	// req.Header.Add("Content-Length", strconv.Itoa(len(jsonData.Encode())))
-	// ---
-	// req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -92,18 +89,11 @@ func (c Client) slackPost(message string) error {
 	}
 	defer resp.Body.Close()
 
-	// fmt.Println("response Status:", resp.Status)
-	// fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	// fmt.Println("response Body:", string(body))
-	// ---
-
 	return err
 }
 
 func (c Client) slackGet(endpoint string, channel string, oldest string) (Response, error) {
 	var messageData Response
-	bearer := "Bearer " + c.SlackBotToken
 	url := fmt.Sprintf("%s/%s", baseURL, endpoint)
 
 	client := &http.Client{}
@@ -112,11 +102,9 @@ func (c Client) slackGet(endpoint string, channel string, oldest string) (Respon
 
 	q := req.URL.Query()
 	q.Add("channel", channel)
-	q.Add("token", c.SlackBotToken)
+	q.Add("token", c.SlackToken)
 	q.Add("oldest", oldest)
-	// req, err := http.NewRequest("GET", url, strings.NewReader("token="+c.SlackBotToken))
-	req.Header.Add("Authorization", bearer)
-	req.Header.Add("Content-Type", "application/json")
+	req.URL.RawQuery = q.Encode()
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -127,16 +115,18 @@ func (c Client) slackGet(endpoint string, channel string, oldest string) (Respon
 	handleError(err)
 
 	err = json.Unmarshal(responseBody, &messageData)
+	spew.Dump(messageData)
 
-	// fmt.Println("response Status:", resp.Status)
-	// fmt.Println("response Headers:", resp.Header)
+	fmt.Println("response Status:", resp.Status)
+	fmt.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
-	// fmt.Println("response Body:", string(body))
+	fmt.Println("response Body:", string(body))
 	// ---
 
 	return messageData, err
 }
 
+// TODO: replace this function with parts of the slackGet and slackPost so we are DRY
 func (c Client) slackCall(method string, endpoint string, channel string, oldest string, data string) (Response, error) {
 	var messageData Response
 

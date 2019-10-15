@@ -6,12 +6,12 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
 	"gitlab.jasondale.me/jdale/govult/pkg/slack"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
 )
 
@@ -101,10 +101,11 @@ func handleError(err error) {
 
 func main() {
 	conf = getConf()
+
 	// * SlackAPI is still a Service from slack package; slack.Client satisfies the Service requirements,
 	// * but SlackAPI will remain a slack.Service as it was declared up top.
 	SlackAPI = slack.Client{
-		Token:            conf.SlackBotToken,
+		SlackToken:       conf.SlackToken,
 		SlackWebHook:     conf.SlackWebHook,
 		ChannelToMonitor: conf.ChannelToMonitor,
 		ChannelToMessage: conf.ChannelToMessage,
@@ -130,17 +131,16 @@ func main() {
 						ChannelToMessage: conf.ChannelToMessage,
 						Oldest:           message.Ts,
 						SlackBotToken:    conf.SlackBotToken,
+						SlackToken:       conf.SlackToken,
 						SlackUser:        conf.SlackUser,
 						SlackWebHook:     conf.SlackWebHook,
 						Token:            conf.SlackToken,
 					}
 					LastMessageTs = message.Ts
 				}
-				spew.Dump("message: ", message)
-				// keywordMatchedMessages := analyzeMessage(message.Text)
-				// if len(message.Text) > 0 {
-				// 	analyzeMessage(message.Text)
-				// }
+				if len(message.Text) > 0 {
+					analyzeMessage(message.Text)
+				}
 				// for _, matchedMessage := range keywordMatchedMessages {
 				// 	fmt.Println("matchedMessage", matchedMessage)
 				// sendSlackMessage(matchedMessage)
@@ -148,7 +148,7 @@ func main() {
 			}
 
 			if !firstRun {
-				SlackAPI.PostMessage("second run")
+				// SlackAPI.PostMessage("second run")
 			}
 			firstRun = false
 			time.Sleep(5 * time.Second)
@@ -165,7 +165,13 @@ func getSlackMessages() (slack.Response, error) {
 
 // Check a message for a match to any of the keywords
 func analyzeMessage(message string) string {
-	// fmt.Println("analyzeMessage " + message.Text)
+	fmt.Println("analyzeMessage " + message)
+	words := strings.Split(message, " ")
+	for _, word := range words {
+		if conf.TriggerWords[word] {
+			fmt.Println("We have a match " + word)
+		}
+	}
 	return message
 }
 
