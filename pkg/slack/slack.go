@@ -40,9 +40,11 @@ type Message struct {
 
 // PostSlackMessage is the struct for posting messages to Slack
 type PostSlackMessage struct {
-	Token   string
-	Channel string
-	Text    string
+	AsUser   string
+	Channel  string
+	Text     string
+	Token    string
+	Username string
 }
 
 var baseURL = "https://slack.com/api"
@@ -64,31 +66,32 @@ func (c Client) PostMessages(messages []string) error {
 	return err
 }
 
-func (c Client) slackCall(method string, endpoint string, channel string, startTime string, data string) (Response, error) {
+func (c Client) slackCall(method string, endpoint string, channel string, oldest string, data string) (Response, error) {
 	var messageData Response
 	url := fmt.Sprintf("%s/%s", baseURL, endpoint)
 	client := &http.Client{}
 	request, err := http.NewRequest(method, url, nil)
 	handleError(err)
-	// add authorization header to the request
 
 	q := request.URL.Query()
 	q.Add("channel", channel)
 	q.Add("token", c.Token)
-	// q.Add("oldest", "1571013695")
-	q.Add("oldest", startTime)
-	request.URL.RawQuery = q.Encode()
+	q.Add("oldest", oldest)
+	q.
+		request.URL.RawQuery = q.Encode()
 	response, err := client.Do(request)
 	handleError(err)
-	// spew.Dump(request.URL.String())
+
 	defer response.Body.Close()
 	responseBody, err := ioutil.ReadAll(response.Body)
 	handleError(err)
-	err = json.Unmarshal(responseBody, &messageData)
-	// if response.StatusCode >= 400 {
-	log.Print(fmt.Errorf("Response Code Error: %d. %s", response.StatusCode, string(responseBody)))
 
-	// }
+	err = json.Unmarshal(responseBody, &messageData)
+
+	if response.StatusCode >= 400 {
+		log.Print(fmt.Errorf("Response Code Error: %d. %s", response.StatusCode, string(responseBody)))
+	}
+
 	return messageData, err
 }
 
