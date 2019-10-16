@@ -1,15 +1,9 @@
-SlackToken: "123abc"
-PidFilePath: "/home/user"
+SlackToken: ""
+SlackBotToken: ""
+PidFilePath: "/home/username"
 ChannelToMonitor: ""
 ChannelToMessage: ""
-TriggerWords:
-  [
-    "@here",
-    "leftover",
-    "pizza",
-    "bagel",
-    "sandwich",
-    "cake",
-    "ice cream",
-    "dessert",
-  ]
+SlackUser: ""
+SlackWebHook: "https://hooks.slack.com/services/blah/blah"
+SlackMessageText: "Check out this message"
+TriggerWords: ["@here", "test"]
