@@ -85,7 +85,6 @@ func main() {
 			}
 			for _, message := range messages.Messages {
 				if message.Ts > LastMessageTs {
-					SlackAPI.UpdateOldest(message.Ts)
 					LastMessageTs = message.Ts
 					spew.Dump(message)
 				}

@@ -100,7 +100,9 @@ func (c Client) GetMessages(channel string, timestamp string) (Response, error) 
 }
 
 // GetUserInfo gets all user info for a userID
-func (c Client) GetUserInfo(userid string)
+func (c Client) GetUserInfo(userid string) UserObject {
+	return UserObject{}
+}
 
 // PostMessage posts a message to a channel
 func (c Client) PostMessage(message string) error {
@@ -140,7 +142,7 @@ func (c Client) slackGet(endpoint string, channel string, oldest string) (Respon
 
 	q := req.URL.Query()
 	q.Add("channel", channel)
-	q.Add("token", c.SlackToken)
+	q.Add("token", c.SlackBotToken)
 	q.Add("oldest", oldest)
 	req.URL.RawQuery = q.Encode()
 
@@ -158,12 +160,62 @@ func (c Client) slackGet(endpoint string, channel string, oldest string) (Respon
 }
 
 // TODO: replace this function with parts of the slackGet and slackPost so we are DRY
-func (c Client) slackCall(method string, endpoint string, channel string, oldest string, data string) (Response, error) {
+func (c Client) slackCall(method string, url string, channel string, oldest string, message string) (Response, error) {
+	var messageData Response
+	var request Request
+	bearer := "Bearer " + c.SlackBotToken
+
+	client := &http.Client{}
+
+	if method == "POST" {
+		data := PostSlackMessage{
+			Text:    message,
+			Channel: c.ChannelToMessage,
+		}
+
+		jsonData, err := json.Marshal(data)
+
+		request, err := http.NewRequest(method, url, bytes.NewBuffer(jsonData))
+		request.Header.Add("Content-Type", "application/json")
+
+	} else {
+		url := fmt.Sprintf("%s/%s", baseURL, url)
+
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", url, nil)
+		handleError(err)
+
+		q := req.URL.Query()
+		q.Add("channel", channel)
+		q.Add("token", c.SlackBotToken)
+		q.Add("oldest", oldest)
+		req.URL.RawQuery = q.Encode()
+
+		resp, err := client.Do(req)
+		if err != nil {
+			panic(err)
+		}
+		defer resp.Body.Close()
+		responseBody, err := ioutil.ReadAll(resp.Body)
+		handleError(err)
+
+		err = json.Unmarshal(responseBody, &messageData)
+
+		return messageData, err
+	}
+
+	request.Header.Add("Authorization", bearer)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	return err
+
 	var messageData Response
 
-	url := fmt.Sprintf("%s/%s", baseURL, endpoint)
-	client := &http.Client{}
-	request, err := http.NewRequest(method, url, nil)
 	handleError(err)
 
 	q := request.URL.Query()
