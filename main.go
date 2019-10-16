@@ -17,13 +17,14 @@ import (
 
 // Config is the configuration struct
 type config struct {
+	ChannelToMessage string
+	ChannelToMonitor string
 	PidFilePath      string
-	SlackToken       string
 	SlackBotToken    string
+	SlackMessageText string
+	SlackToken       string
 	SlackUser        string
 	SlackWebHook     string
-	ChannelToMonitor string
-	ChannelToMessage string
 	TriggerWords     []string
 }
 
@@ -92,24 +93,18 @@ func handleError(err error) {
 	}
 }
 
-// import config:
-// token, channel to monitor, channel to message, trigger words
-// pull messages since last pull from monitored channel
-// see if any words are in the list from the message - some kind of string search
-// if match, copy message and release the vultures
-// rinse, repeat (while loop?)
-
 func main() {
 	conf = getConf()
 
 	// * SlackAPI is still a Service from slack package; slack.Client satisfies the Service requirements,
 	// * but SlackAPI will remain a slack.Service as it was declared up top.
 	SlackAPI = slack.Client{
-		SlackToken:       conf.SlackToken,
-		SlackWebHook:     conf.SlackWebHook,
-		ChannelToMonitor: conf.ChannelToMonitor,
 		ChannelToMessage: conf.ChannelToMessage,
+		ChannelToMonitor: conf.ChannelToMonitor,
 		Oldest:           "0",
+		SlackToken:       conf.SlackToken,
+		SlackMessageText: conf.SlackMessageText,
+		SlackWebHook:     conf.SlackWebHook,
 	}
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
 	pid := alreadyRunning(pidPath)
@@ -131,6 +126,7 @@ func main() {
 						ChannelToMessage: conf.ChannelToMessage,
 						Oldest:           message.Ts,
 						SlackBotToken:    conf.SlackBotToken,
+						SlackMessageText: conf.SlackMessageText,
 						SlackToken:       conf.SlackToken,
 						SlackUser:        conf.SlackUser,
 						SlackWebHook:     conf.SlackWebHook,
@@ -138,18 +134,16 @@ func main() {
 					}
 					LastMessageTs = message.Ts
 				}
-				if len(message.Text) > 0 {
-					analyzeMessage(message.Text)
+				if !firstRun {
+					if len(message.Text) > 0 {
+						if analyzeMessage(message.Text) {
+							sendSlackMessage(message.Text)
+						}
+
+					}
 				}
-				// for _, matchedMessage := range keywordMatchedMessages {
-				// 	fmt.Println("matchedMessage", matchedMessage)
-				// sendSlackMessage(matchedMessage)
-				// }
 			}
 
-			if !firstRun {
-				// SlackAPI.PostMessage("second run")
-			}
 			firstRun = false
 			time.Sleep(5 * time.Second)
 		}
@@ -164,18 +158,21 @@ func getSlackMessages() (slack.Response, error) {
 }
 
 // Check a message for a match to any of the keywords
-func analyzeMessage(message string) string {
-	fmt.Println("analyzeMessage " + message)
+func analyzeMessage(message string) bool {
+	match := false
 	words := strings.Split(message, " ")
 	for _, word := range words {
-		if conf.TriggerWords[word] {
-			fmt.Println("We have a match " + word)
+		for _, trigger := range conf.TriggerWords {
+			if strings.Contains(word, trigger) {
+				match = true
+			}
 		}
 	}
-	return message
+	return match
 }
 
 // Send a slack message to a channel
 func sendSlackMessage(message string) {
-	// fmt.Println("sendSlackMessage " + message)
+	SlackAPI.PostMessage(conf.SlackMessageText)
+	SlackAPI.PostMessage("> " + message)
 }

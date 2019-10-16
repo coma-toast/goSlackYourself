@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/davecgh/go-spew/spew"
 	// "github.com/davecgh/go-spew/spew"
 )
 
@@ -24,6 +22,7 @@ type Client struct {
 	ChannelToMessage string
 	Oldest           string
 	SlackBotToken    string
+	SlackMessageText string
 	SlackToken       string
 	SlackUser        string
 	SlackWebHook     string
@@ -56,7 +55,6 @@ var baseURL = "https://slack.com/api"
 
 // GetMessages gets Slack messages from a channel from a start time
 func (c Client) GetMessages() (Response, error) {
-	// messages, err := c.slackCall("GET", "conversations.history", c.ChannelToMonitor, c.Oldest, "")
 	messages, err := c.slackGet("conversations.history", c.ChannelToMonitor, c.Oldest)
 
 	return messages, err
@@ -64,7 +62,6 @@ func (c Client) GetMessages() (Response, error) {
 
 // PostMessage posts a message to a channel
 func (c Client) PostMessage(message string) error {
-	// _, err := c.slackCall("POST", "/chat.postMessage", c.ChannelToMessage, "0", message)
 	err := c.slackPost(message)
 
 	return err
@@ -115,13 +112,6 @@ func (c Client) slackGet(endpoint string, channel string, oldest string) (Respon
 	handleError(err)
 
 	err = json.Unmarshal(responseBody, &messageData)
-	spew.Dump(messageData)
-
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
-	// ---
 
 	return messageData, err
 }
