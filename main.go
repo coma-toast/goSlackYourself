@@ -70,6 +70,7 @@ func main() {
 		SlackToken:       conf.SlackToken,
 		SlackWebHook:     conf.SlackWebHook,
 	}
+	sendSlackMessage("test")
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
 	pid := pidcheck.AlreadyRunning(pidPath)
 
@@ -127,6 +128,13 @@ func analyzeMessage(message string) bool {
 
 // Send a slack message to a channel
 func sendSlackMessage(message string) {
-	SlackAPI.PostMessage(conf.SlackMessageText)
-	SlackAPI.PostMessage("> " + message)
+	err := SlackAPI.PostMessage(slack.PostSlackMessage{
+		Channel: conf.ChannelToMessage,
+		Text:    message,
+	})
+	if err != nil {
+		panic(err)
+	}
+	// SlackAPI.PostMessage(conf.SlackMessageText)
+	// SlackAPI.PostMessage("> " + message)
 }
