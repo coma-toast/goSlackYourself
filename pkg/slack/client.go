@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+// TODO: remove variables that are unused or need to be tracked elsewhere (oldest, channel stuff, etc)
 // Client is the Slack Client
 type Client struct {
 	ChannelToMonitor string
@@ -41,7 +42,7 @@ func (c *Client) call(method string, url string, payload interface{}, target int
 	if c.client == nil {
 		c.client = &http.Client{}
 	}
-	// TODO: throw error if >= that 400
+	// TODO: throw error if >= 400
 	jsonData := []byte{}
 	var err error
 

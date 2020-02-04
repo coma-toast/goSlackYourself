@@ -2,20 +2,26 @@ package slack
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 // Service is the Slack service
 type Service interface {
-	GetMessages(string, string) (GetResponse, error)
-	PostMessage(payload PostSlackMessage) (PostResponse, error)
+	GetMessages(string, string) (Response, error)
+	PostMessage(payload PostSlackMessage) error
 }
 
 // GetMessages gets Slack messages from a channel from a start time
 func (c Client) GetMessages(channel string, timestamp string) (Response, error) {
 	// messages, err := c.slackGet("conversations.history", channel, timestamp)
-	messages, err := c.call("GET", channel, timestamp)
+	messages, err := c.call("GET", channel, timestamp, nil)
+	spew.Dump(messages)
+	os.Exit(1)
 
-	return messages, err
+	return Response{}, err
+	// return messages, err
 }
 
 // GetUserInfo gets all user info for a userID
