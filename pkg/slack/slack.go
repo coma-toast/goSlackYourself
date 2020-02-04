@@ -15,9 +15,10 @@ type Service interface {
 
 // GetMessages gets Slack messages from a channel from a start time
 func (c Client) GetMessages(channel string, timestamp string) (Response, error) {
+	var response Response
 	// messages, err := c.slackGet("conversations.history", channel, timestamp)
-	messages, err := c.call("GET", channel, timestamp, nil)
-	spew.Dump(messages)
+	_, err := c.call("GET", channel, timestamp, &response)
+	spew.Dump("here", response)
 	os.Exit(1)
 
 	return Response{}, err

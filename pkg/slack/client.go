@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 // TODO: remove variables that are unused or need to be tracked elsewhere (oldest, channel stuff, etc)
@@ -39,15 +41,16 @@ func (e Error) Error() string {
 
 func (c *Client) call(method string, url string, payload interface{}, target interface{}) ([]byte, error) {
 	url = baseURL + url
-	if c.client == nil {
-		c.client = &http.Client{}
-	}
-	// TODO: throw error if >= 400
 	jsonData := []byte{}
 	var err error
 
+	if c.client == nil {
+		c.client = &http.Client{}
+	}
+
 	if payload != nil {
 		jsonData, err = json.Marshal(payload)
+		spew.Dump("Payload: ", payload)
 		if err != nil {
 			return []byte{}, err
 		}
@@ -75,10 +78,12 @@ func (c *Client) call(method string, url string, payload interface{}, target int
 	//TODO: this can all be one error function, take responseBody and do all the error checks
 	errorTarget := Error{}
 
-	err = json.Unmarshal(responseBody, &errorTarget)
+	err = json.Unmarshal(responseBody, &target)
 	if err != nil {
 		return responseBody, err
 	}
+
+	errorTarget.Ok = true
 
 	if errorTarget.Ok != true {
 		errorTarget.CallResponse = resp

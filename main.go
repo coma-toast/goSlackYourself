@@ -75,6 +75,7 @@ func main() {
 	pid := pidcheck.AlreadyRunning(pidPath)
 
 	if !pid {
+		fmt.Println("Tick...")
 		// Infinite loop - get new messages every 5 seconds
 		var LastMessageTs string
 		LastMessageTs = "0"
@@ -87,7 +88,7 @@ func main() {
 			for _, message := range messages.Messages {
 				if message.Ts > LastMessageTs {
 					LastMessageTs = message.Ts
-					spew.Dump(message)
+					spew.Dump("Message: ", message)
 				}
 				if !firstRun {
 					if len(message.Text) > 0 {
@@ -133,7 +134,8 @@ func sendSlackMessage(message string) {
 		Text:    message,
 	})
 	if err != nil {
-		panic(err)
+		spew.Dump(err)
+		// panic(err)
 	}
 	// SlackAPI.PostMessage(conf.SlackMessageText)
 	// SlackAPI.PostMessage("> " + message)
