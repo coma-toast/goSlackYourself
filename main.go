@@ -70,15 +70,15 @@ func main() {
 		SlackToken:       conf.SlackToken,
 		SlackWebHook:     conf.SlackWebHook,
 	}
-	sendSlackMessage("test")
+	// sendSlackMessage("test")
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
 	pid := pidcheck.AlreadyRunning(pidPath)
 
 	if !pid {
 		fmt.Println("Tick...")
 		// Infinite loop - get new messages every 5 seconds
-		var LastMessageTs string
-		LastMessageTs = "0"
+		var LastMessageTs float64
+		LastMessageTs = 0
 		firstRun := true
 		for true {
 			messages, err := getSlackMessages(conf.ChannelToMonitor, LastMessageTs)
@@ -107,7 +107,7 @@ func main() {
 }
 
 // Get Slack messages
-func getSlackMessages(channel string, timestamp string) (slack.Response, error) {
+func getSlackMessages(channel string, timestamp float64) (slack.Response, error) {
 	response, err := SlackAPI.GetMessages(channel, timestamp)
 
 	return response, err

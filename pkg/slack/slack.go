@@ -2,24 +2,27 @@ package slack
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/davecgh/go-spew/spew"
 )
 
 // Service is the Slack service
 type Service interface {
-	GetMessages(string, string) (Response, error)
+	GetMessages(string, float64) (Response, error)
 	PostMessage(payload PostSlackMessage) error
 }
 
 // GetMessages gets Slack messages from a channel from a start time
-func (c Client) GetMessages(channel string, timestamp string) (Response, error) {
+func (c Client) GetMessages(channel string, timestamp float64) (Response, error) {
 	var response Response
+	payload := GetPayload{
+		channel: channel,
+		oldest:  timestamp,
+	}
 	// messages, err := c.slackGet("conversations.history", channel, timestamp)
-	_, err := c.call("GET", channel, timestamp, &response)
-	spew.Dump("here", response)
-	os.Exit(1)
+	_, err := c.call("GET", "conversations.history", payload, &response)
+	spew.Dump("response: ", response)
+	// os.Exit(1)
 
 	return Response{}, err
 	// return messages, err

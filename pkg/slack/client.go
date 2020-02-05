@@ -32,7 +32,7 @@ type Error struct {
 	CallResponse *http.Response
 }
 
-var baseURL = "https://slack.com/api"
+var baseURL = "https://slack.com/api/"
 
 func (e Error) Error() string {
 	message := fmt.Sprintf("Slack API Error: %s \n Status Code: %d", e.ErrorText, e.CallResponse.StatusCode)
@@ -63,6 +63,7 @@ func (c *Client) call(method string, url string, payload interface{}, target int
 
 	request.Header.Add("Authorization", "Bearer "+c.SlackBotToken)
 	request.Header.Add("Content-Type", "application/json")
+	spew.Dump("Request: ", request)
 
 	resp, err := c.client.Do(request)
 	if err != nil {
@@ -78,14 +79,14 @@ func (c *Client) call(method string, url string, payload interface{}, target int
 	//TODO: this can all be one error function, take responseBody and do all the error checks
 	errorTarget := Error{}
 
-	err = json.Unmarshal(responseBody, &target)
+	spew.Dump("responseBody", responseBody)
+	err = json.Unmarshal(responseBody, &errorTarget)
 	if err != nil {
 		return responseBody, err
 	}
 
-	errorTarget.Ok = true
-
 	if errorTarget.Ok != true {
+		spew.Dump(resp)
 		errorTarget.CallResponse = resp
 		return responseBody, errorTarget
 	}

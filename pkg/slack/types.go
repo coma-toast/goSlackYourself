@@ -6,14 +6,24 @@ type Response struct {
 	Messages []Message `json:"messages"`
 }
 
+type GetPayload struct {
+	token     string
+	channel   string
+	count     int     //Number of messages to return, between 1 and 1000.
+	inclusive bool    //Include messages with latest or oldest timestamp in results.
+	latest    float64 //Optional, default=now, End of time range of messages to include in results.
+	oldest    float64 //Optional, default=0 Start of time range of messages to include in results.
+	unreads   bool    //Optional, default=0 Include unread_count_display in the output?
+}
+
 // Message is the individual message response
 type Message struct {
-	ClientMsgID string `json:"client_msg_id"`
-	Type        string `json:"type"`
-	Text        string `json:"text"`
-	User        string `json:"user"`
-	Ts          string `json:"ts"`
-	Team        string `json:"team"`
+	ClientMsgID string  `json:"client_msg_id"`
+	Type        string  `json:"type"`
+	Text        string  `json:"text"`
+	User        string  `json:"user"`
+	Ts          float64 `json:"ts"`
+	Team        string  `json:"team"`
 }
 
 // PostSlackMessage is the struct for posting messages to Slack
