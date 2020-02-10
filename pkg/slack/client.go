@@ -61,8 +61,15 @@ func (c *Client) call(method string, url string, payload interface{}, target int
 		return []byte{}, err
 	}
 
-	request.Header.Add("Authorization", "Bearer "+c.SlackBotToken)
-	request.Header.Add("Content-Type", "application/json")
+	q := request.URL.Query()
+	q.Add("token", c.SlackBotToken)
+	q.Add("channel", c.ChannelToMonitor)
+
+	request.URL.RawQuery = q.Encode()
+
+	// request.Header.Add("Authorization", "Bearer "+c.SlackBotToken)
+	// request.Header.Add("Content-Type", "application/json")
+	// request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	spew.Dump("Request: ", request)
 
 	resp, err := c.client.Do(request)

@@ -18,9 +18,10 @@ func (c Client) GetMessages(channel string, timestamp float64) (Response, error)
 	payload := GetPayload{
 		channel: channel,
 		oldest:  timestamp,
+		token:   c.SlackBotToken,
 	}
 	// messages, err := c.slackGet("conversations.history", channel, timestamp)
-	_, err := c.call("GET", "conversations.history", payload, &response)
+	_, err := c.call("GET", "channels.history", payload, &response)
 	spew.Dump("response: ", response)
 	// os.Exit(1)
 
