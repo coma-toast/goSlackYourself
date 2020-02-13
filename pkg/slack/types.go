@@ -6,7 +6,8 @@ type Response struct {
 	Messages []Message `json:"messages"`
 }
 
-type GetPayload struct {
+// Payload contains slack API parameters
+type Payload struct {
 	token     string
 	channel   string
 	count     int     //Number of messages to return, between 1 and 1000.
@@ -14,6 +15,7 @@ type GetPayload struct {
 	latest    float64 //Optional, default=now, End of time range of messages to include in results.
 	oldest    float64 //Optional, default=0 Start of time range of messages to include in results.
 	unreads   bool    //Optional, default=0 Include unread_count_display in the output?
+	text      string
 }
 
 // Message is the individual message response

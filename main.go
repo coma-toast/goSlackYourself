@@ -75,15 +75,18 @@ func main() {
 	pid := pidcheck.AlreadyRunning(pidPath)
 
 	if !pid {
-		fmt.Println("Tick...")
 		// Infinite loop - get new messages every 5 seconds
 		var LastMessageTs float64
 		LastMessageTs = 0
 		firstRun := true
-		for true {
+		for {
+			fmt.Println("Tick...")
 			messages, err := getSlackMessages(conf.ChannelToMonitor, LastMessageTs)
 			if err != nil {
 				fmt.Println("Error encountered: ", err)
+			}
+			if !firstRun {
+				spew.Dump(messages)
 			}
 			for _, message := range messages.Messages {
 				if message.Ts > LastMessageTs {
@@ -121,6 +124,7 @@ func analyzeMessage(message string) bool {
 		for _, trigger := range conf.TriggerWords {
 			if strings.Contains(word, trigger) {
 				match = true
+				spew.Dump("We got a match", word)
 			}
 		}
 	}
@@ -129,14 +133,15 @@ func analyzeMessage(message string) bool {
 
 // Send a slack message to a channel
 func sendSlackMessage(message string) {
-	err := SlackAPI.PostMessage(slack.PostSlackMessage{
-		Channel: conf.ChannelToMessage,
-		Text:    message,
-	})
-	if err != nil {
-		spew.Dump(err)
-		// panic(err)
-	}
+	spew.Dump("Posting message: ", message)
+	// err := SlackAPI.PostMessage(slack.Payload{
+	// 	channel: conf.ChannelToMessage,
+	// 	text:    message,
+	// })
+	// if err != nil {
+	// 	spew.Dump(err)
+	// 	// panic(err)
+	// }
 	// SlackAPI.PostMessage(conf.SlackMessageText)
 	// SlackAPI.PostMessage("> " + message)
 }

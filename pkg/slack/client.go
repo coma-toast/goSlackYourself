@@ -1,13 +1,11 @@
 package slack
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/davecgh/go-spew/spew"
+	"net/url"
 )
 
 // TODO: remove variables that are unused or need to be tracked elsewhere (oldest, channel stuff, etc)
@@ -39,40 +37,35 @@ func (e Error) Error() string {
 	return message
 }
 
-func (c *Client) call(method string, url string, payload interface{}, target interface{}) ([]byte, error) {
-	url = baseURL + url
+func (c *Client) call(method string, destination string, payload Payload, target interface{}) ([]byte, error) {
+	destination = baseURL + destination
 	jsonData := []byte{}
+	_ = jsonData
 	var err error
 
 	if c.client == nil {
 		c.client = &http.Client{}
 	}
 
-	if payload != nil {
-		jsonData, err = json.Marshal(payload)
-		spew.Dump("Payload: ", payload)
-		if err != nil {
-			return []byte{}, err
-		}
+	values := url.Values{
+		"token":   {payload.token},
+		"channel": {payload.channel},
 	}
 
-	request, err := http.NewRequest(method, url, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest(method, destination, nil)
 	if err != nil {
 		return []byte{}, err
 	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.URL.RawQuery = values.Encode()
 
-	q := request.URL.Query()
-	q.Add("token", c.SlackBotToken)
-	q.Add("channel", c.ChannelToMonitor)
+	// q := request.URL.Query()
+	// q.Add("token", c.SlackBotToken)
+	// q.Add("channel", c.ChannelToMonitor)
 
-	request.URL.RawQuery = q.Encode()
+	// spew.Dump("Request: ", req)
 
-	// request.Header.Add("Authorization", "Bearer "+c.SlackBotToken)
-	// request.Header.Add("Content-Type", "application/json")
-	// request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	spew.Dump("Request: ", request)
-
-	resp, err := c.client.Do(request)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -86,14 +79,13 @@ func (c *Client) call(method string, url string, payload interface{}, target int
 	//TODO: this can all be one error function, take responseBody and do all the error checks
 	errorTarget := Error{}
 
-	spew.Dump("responseBody", responseBody)
 	err = json.Unmarshal(responseBody, &errorTarget)
 	if err != nil {
 		return responseBody, err
 	}
 
 	if errorTarget.Ok != true {
-		spew.Dump(resp)
+		// spew.Dump(resp)
 		errorTarget.CallResponse = resp
 		return responseBody, errorTarget
 	}
@@ -103,12 +95,12 @@ func (c *Client) call(method string, url string, payload interface{}, target int
 		err := fmt.Errorf("Slack HTTP Error: %d", resp.StatusCode)
 		return responseBody, err
 	}
-	if target != nil {
-		err = json.Unmarshal(responseBody, target)
-		if err != nil {
-			return responseBody, err
-		}
-	}
+	// if target != nil {
+	// 	err = json.Unmarshal(responseBody, target)
+	// 	if err != nil {
+	// 		return responseBody, err
+	// 	}
+	// }
 
 	return responseBody, nil
 }
