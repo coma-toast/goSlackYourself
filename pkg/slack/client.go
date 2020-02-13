@@ -1,7 +1,6 @@
 package slack
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -59,10 +58,6 @@ func (c *Client) call(method string, destination string, payload Payload, target
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.URL.RawQuery = values.Encode()
 
-	// q := request.URL.Query()
-	// q.Add("token", c.SlackBotToken)
-	// q.Add("channel", c.ChannelToMonitor)
-
 	// spew.Dump("Request: ", req)
 
 	resp, err := c.client.Do(req)
@@ -76,16 +71,19 @@ func (c *Client) call(method string, destination string, payload Payload, target
 	if err != nil {
 		return []byte{}, err
 	}
+	// spew.Dump("ReponseBody: ", responseBody)
 	//TODO: this can all be one error function, take responseBody and do all the error checks
 	errorTarget := Error{}
 
-	err = json.Unmarshal(responseBody, &errorTarget)
-	if err != nil {
-		return responseBody, err
-	}
+	// err = json.Unmarshal(responseBody, &target)
+	// if err != nil {
+	// 	spew.Dump("failed to unmarshal json")
+	// 	return responseBody, err
+	// }
+
+	// spew.Dump("ErrorTarget: ", errorTarget)
 
 	if errorTarget.Ok != true {
-		// spew.Dump(resp)
 		errorTarget.CallResponse = resp
 		return responseBody, errorTarget
 	}
