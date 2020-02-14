@@ -1,10 +1,13 @@
 package slack
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 // TODO: remove variables that are unused or need to be tracked elsewhere (oldest, channel stuff, etc)
@@ -75,11 +78,11 @@ func (c *Client) call(method string, destination string, payload Payload, target
 	//TODO: this can all be one error function, take responseBody and do all the error checks
 	errorTarget := Error{}
 
-	// err = json.Unmarshal(responseBody, &target)
-	// if err != nil {
-	// 	spew.Dump("failed to unmarshal json")
-	// 	return responseBody, err
-	// }
+	err = json.Unmarshal(responseBody, &target)
+	if err != nil {
+		spew.Dump("failed to unmarshal json", err)
+		return responseBody, err
+	}
 
 	// spew.Dump("ErrorTarget: ", errorTarget)
 

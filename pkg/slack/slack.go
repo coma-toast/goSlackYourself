@@ -6,12 +6,12 @@ import (
 
 // Service is the Slack service
 type Service interface {
-	GetMessages(string, float64) (Response, error)
+	GetMessages(string, string) (Response, error)
 	PostMessage(payload Payload) error
 }
 
 // GetMessages gets Slack messages from a channel from a start time
-func (c Client) GetMessages(channel string, timestamp float64) (Response, error) {
+func (c Client) GetMessages(channel string, timestamp string) (Response, error) {
 	var response Response
 	payload := Payload{
 		channel: channel,

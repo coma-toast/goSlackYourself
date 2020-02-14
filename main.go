@@ -76,8 +76,8 @@ func main() {
 
 	if !pid {
 		// Infinite loop - get new messages every 5 seconds
-		var LastMessageTs float64
-		LastMessageTs = 0
+		var LastMessageTs string
+		LastMessageTs = "0"
 		firstRun := true
 		for {
 			fmt.Println("Tick...")
@@ -87,9 +87,9 @@ func main() {
 			if err != nil {
 				fmt.Println("Error encountered: ", err)
 			}
-			if !firstRun {
-				spew.Dump(messages)
-			}
+			// if !firstRun {
+			spew.Dump("Messages: ", messages)
+			// }
 			for _, message := range messages.Messages {
 				fmt.Println("ts: ", message.Ts)
 				if message.Ts > LastMessageTs {
@@ -113,7 +113,7 @@ func main() {
 }
 
 // Get Slack messages
-func getSlackMessages(channel string, timestamp float64) (slack.Response, error) {
+func getSlackMessages(channel string, timestamp string) (slack.Response, error) {
 	response, err := SlackAPI.GetMessages(channel, timestamp)
 
 	return response, err
