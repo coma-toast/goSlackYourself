@@ -23,7 +23,7 @@ func (c Client) GetMessages(channel string, timestamp string) (Response, error) 
 	// spew.Dump("response: ", response)
 	// os.Exit(1)
 
-	return Response{}, err
+	return response, err
 	// return messages, err
 }
 

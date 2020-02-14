@@ -48,10 +48,11 @@ func (c *Client) call(method string, destination string, payload Payload, target
 	if c.client == nil {
 		c.client = &http.Client{}
 	}
-
+	spew.Dump("Payload: ", payload)
 	values := url.Values{
 		"token":   {payload.token},
 		"channel": {payload.channel},
+		"oldest":  {payload.oldest},
 	}
 
 	req, err := http.NewRequest(method, destination, nil)

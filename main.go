@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -73,35 +74,36 @@ func main() {
 	// sendSlackMessage("test")
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
 	pid := pidcheck.AlreadyRunning(pidPath)
+	var LastMessageTs int
+	LastMessageTs = 0
+	firstRun := true
 
 	if !pid {
 		// Infinite loop - get new messages every 5 seconds
-		var LastMessageTs string
-		LastMessageTs = "0"
-		firstRun := true
 		for {
 			fmt.Println("Tick...")
-			fmt.Println(LastMessageTs)
-			messages, err := getSlackMessages(conf.ChannelToMonitor, LastMessageTs)
+			fmt.Println("LastMessageTs:", LastMessageTs)
+			messages, err := getSlackMessages(conf.ChannelToMonitor, strconv.Itoa(LastMessageTs))
 			spew.Dump(messages)
 			if err != nil {
 				fmt.Println("Error encountered: ", err)
 			}
-			// if !firstRun {
-			spew.Dump("Messages: ", messages)
-			// }
-			for _, message := range messages.Messages {
-				fmt.Println("ts: ", message.Ts)
-				if message.Ts > LastMessageTs {
-					LastMessageTs = message.Ts
-					spew.Dump("Message: ", message)
-				}
-				if !firstRun {
-					if len(message.Text) > 0 {
-						if analyzeMessage(message.Text) {
-							sendSlackMessage(message.Text)
-						}
+			if !firstRun {
+				spew.Dump("Messages: ", messages)
 
+				for _, message := range messages.Messages {
+					fmt.Println("ts: ", message.Ts)
+					if message.Ts > LastMessageTs {
+						LastMessageTs = message.Ts
+						spew.Dump("Message: ", message)
+					}
+					if !firstRun {
+						if len(message.Text) > 0 {
+							if analyzeMessage(message.Text) {
+								sendSlackMessage(message.Text)
+							}
+
+						}
 					}
 				}
 			}
