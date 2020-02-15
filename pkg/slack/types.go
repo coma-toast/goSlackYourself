@@ -24,7 +24,7 @@ type Message struct {
 	Type        string `json:"type"`
 	Text        string `json:"text"`
 	User        string `json:"user"`
-	Ts          int    `json:"ts"`
+	Ts          string `json:"ts"`
 	Team        string `json:"team"`
 }
 

@@ -84,19 +84,20 @@ func main() {
 			fmt.Println("Tick...")
 			fmt.Println("LastMessageTs:", LastMessageTs)
 			messages, err := getSlackMessages(conf.ChannelToMonitor, strconv.Itoa(LastMessageTs))
-			spew.Dump(messages)
+			// spew.Dump(messages)
 			if err != nil {
 				fmt.Println("Error encountered: ", err)
 			}
-			if !firstRun {
-				spew.Dump("Messages: ", messages)
-
-				for _, message := range messages.Messages {
-					fmt.Println("ts: ", message.Ts)
-					if message.Ts > LastMessageTs {
-						LastMessageTs = message.Ts
-						spew.Dump("Message: ", message)
-					}
+			for _, message := range messages.Messages {
+				currentTsSplit := strings.Split(message.Ts, ".")
+				currentTs, err := strconv.Atoi(currentTsSplit[0])
+				if err != nil {
+					spew.Dump(err)
+				}
+				fmt.Printf("ts: %s,  %d, %d\n", message.Ts, LastMessageTs, currentTs)
+				if currentTs > LastMessageTs {
+					LastMessageTs = currentTs
+					spew.Dump("Message: ", message)
 					if !firstRun {
 						if len(message.Text) > 0 {
 							if analyzeMessage(message.Text) {
@@ -105,6 +106,7 @@ func main() {
 
 						}
 					}
+
 				}
 			}
 
