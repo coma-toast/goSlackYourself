@@ -35,11 +35,14 @@ type Error struct {
 var baseURL = "https://slack.com/api/"
 
 func (e Error) Error() string {
-	message := fmt.Sprintf("Slack API Error: %s \n Status Code: %d", e.ErrorText, e.CallResponse.StatusCode)
+	var message string
+	if e.CallResponse.StatusCode != 200 {
+		message = fmt.Sprintf("Slack API Error: %s \n Status Code: %d", e.ErrorText, e.CallResponse.StatusCode)
+	}
 	return message
 }
 
-func (c *Client) call(method string, destination string, payload Payload, target interface{}) ([]byte, error) {
+func (c *Client) call(method string, destination string, payload Payload, target interface{}) error {
 	destination = baseURL + destination
 	jsonData := []byte{}
 	_ = jsonData
@@ -53,11 +56,13 @@ func (c *Client) call(method string, destination string, payload Payload, target
 		"token":   {payload.token},
 		"channel": {payload.channel},
 		"oldest":  {payload.oldest},
+		"text":    {payload.text},
+		"user":    {payload.user},
 	}
 
 	req, err := http.NewRequest(method, destination, nil)
 	if err != nil {
-		return []byte{}, err
+		return err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.URL.RawQuery = values.Encode()
@@ -66,14 +71,14 @@ func (c *Client) call(method string, destination string, payload Payload, target
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return []byte{}, err
+		return err
 	}
 
 	defer resp.Body.Close()
 
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return []byte{}, err
+		return err
 	}
 	// spew.Dump("ReponseBody: ", responseBody)
 	//TODO: this can all be one error function, take responseBody and do all the error checks
@@ -82,27 +87,27 @@ func (c *Client) call(method string, destination string, payload Payload, target
 	err = json.Unmarshal(responseBody, &target)
 	if err != nil {
 		spew.Dump("failed to unmarshal json", err)
-		return responseBody, err
+		return err
 	}
 
 	// spew.Dump("ErrorTarget: ", errorTarget)
 
 	if errorTarget.Ok != true {
 		errorTarget.CallResponse = resp
-		return responseBody, errorTarget
+		return errorTarget
 	}
 	// TODO: ^ to here
 
 	if resp.StatusCode >= 400 {
 		err := fmt.Errorf("Slack HTTP Error: %d", resp.StatusCode)
-		return responseBody, err
+		return err
 	}
 	// if target != nil {
 	// 	err = json.Unmarshal(responseBody, target)
 	// 	if err != nil {
-	// 		return responseBody, err
+	// 		return err
 	// 	}
 	// }
 
-	return responseBody, nil
+	return nil
 }

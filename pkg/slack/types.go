@@ -8,14 +8,16 @@ type Response struct {
 
 // Payload contains slack API parameters
 type Payload struct {
-	token     string
-	channel   string
-	count     int     //Number of messages to return, between 1 and 1000.
-	inclusive bool    //Include messages with latest or oldest timestamp in results.
-	latest    float64 //Optional, default=now, End of time range of messages to include in results.
-	oldest    string  //Optional, default=0 Start of time range of messages to include in results.
-	unreads   bool    //Optional, default=0 Include unread_count_display in the output?
-	text      string
+	token      string
+	channel    string
+	count      int //Number of messages to return, between 1 and 1000.
+	icon_emoji string
+	inclusive  bool    //Include messages with latest or oldest timestamp in results.
+	latest     float64 //Optional, default=now, End of time range of messages to include in results.
+	oldest     string  //Optional, default=0 Start of time range of messages to include in results.
+	unreads    bool    //Optional, default=0 Include unread_count_display in the output?
+	user       string
+	text       string
 }
 
 // Message is the individual message response

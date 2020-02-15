@@ -94,14 +94,13 @@ func main() {
 				if err != nil {
 					spew.Dump(err)
 				}
-				fmt.Printf("ts: %s,  %d, %d\n", message.Ts, LastMessageTs, currentTs)
 				if currentTs > LastMessageTs {
 					LastMessageTs = currentTs
 					spew.Dump("Message: ", message)
 					if !firstRun {
 						if len(message.Text) > 0 {
 							if analyzeMessage(message.Text) {
-								sendSlackMessage(message.Text)
+								sendSlackMessage(message)
 							}
 
 						}
@@ -125,30 +124,29 @@ func getSlackMessages(channel string, timestamp string) (slack.Response, error) 
 
 // Check a message for a match to any of the keywords
 func analyzeMessage(message string) bool {
-	match := false
 	words := strings.Split(message, " ")
 	for _, word := range words {
+		word = strings.ToLower(word)
 		for _, trigger := range conf.TriggerWords {
 			if strings.Contains(word, trigger) {
-				match = true
-				spew.Dump("We got a match", word)
+				return true
 			}
 		}
 	}
-	return match
+	return false
 }
 
 // Send a slack message to a channel
-func sendSlackMessage(message string) {
-	spew.Dump("Posting message: ", message)
-	// err := SlackAPI.PostMessage(slack.Payload{
-	// 	channel: conf.ChannelToMessage,
-	// 	text:    message,
-	// })
-	// if err != nil {
-	// 	spew.Dump(err)
-	// 	// panic(err)
-	// }
-	// SlackAPI.PostMessage(conf.SlackMessageText)
-	// SlackAPI.PostMessage("> " + message)
+func sendSlackMessage(message slack.Message) {
+	spew.Dump("Posting message: ", message.Text)
+
+	err := SlackAPI.PostMessage(conf.ChannelToMessage, conf.SlackMessageText)
+	if err != nil {
+		spew.Dump(err)
+	}
+
+	err = SlackAPI.PostMessage(conf.ChannelToMessage, "> "+message.User+": "+message.Text)
+	if err != nil {
+		spew.Dump(err)
+	}
 }

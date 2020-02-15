@@ -1,13 +1,11 @@
 package slack
 
-import (
-	"fmt"
-)
+import "github.com/davecgh/go-spew/spew"
 
 // Service is the Slack service
 type Service interface {
-	GetMessages(string, string) (Response, error)
-	PostMessage(payload Payload) error
+	GetMessages(channel string, timestamp string) (Response, error)
+	PostMessage(channel string, text string) error
 }
 
 // GetMessages gets Slack messages from a channel from a start time
@@ -18,13 +16,10 @@ func (c Client) GetMessages(channel string, timestamp string) (Response, error) 
 		oldest:  timestamp,
 		token:   c.SlackBotToken,
 	}
-	// messages, err := c.slackGet("conversations.history", channel, timestamp)
-	_, err := c.call("GET", "channels.history", payload, &response)
-	// spew.Dump("response: ", response)
-	// os.Exit(1)
+
+	err := c.call("GET", "channels.history", payload, &response)
 
 	return response, err
-	// return messages, err
 }
 
 // GetUserInfo gets all user info for a userID
@@ -35,11 +30,18 @@ func (c Client) GetUserInfo(userid string) UserObject {
 }
 
 // PostMessage posts a message to Slack
-func (c Client) PostMessage(payload Payload) error {
-	url := "/chat.postMessage"
+func (c Client) PostMessage(channel string, text string) error {
+	url := "chat.postMessage"
+	payload := Payload{
+		channel:    channel,
+		token:      c.SlackBotToken,
+		icon_emoji: ":vulture:",
+		text:       text,
+	}
+	var response Response
 
-	response, err := c.call("POST", url, payload, nil)
-	fmt.Println(string(response))
+	err := c.call("POST", url, payload, &response)
+	spew.Dump("POST Response:", response)
 
 	return err
 }
