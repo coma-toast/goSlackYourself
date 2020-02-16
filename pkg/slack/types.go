@@ -2,8 +2,9 @@ package slack
 
 // Response is the all messages returned by the query
 type Response struct {
-	Ok       bool      `json:"ok"`
-	Messages []Message `json:"messages"`
+	Ok       bool       `json:"ok"`
+	Messages []Message  `json:"messages"`
+	User     UserObject `json:"user"`
 }
 
 // Payload contains slack API parameters
@@ -18,6 +19,9 @@ type Payload struct {
 	unreads    bool    //Optional, default=0 Include unread_count_display in the output?
 	user       string
 	text       string
+	as_user    bool
+	username   string
+	icon_url   string
 }
 
 // Message is the individual message response

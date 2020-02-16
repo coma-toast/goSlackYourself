@@ -71,7 +71,6 @@ func main() {
 		SlackToken:       conf.SlackToken,
 		SlackWebHook:     conf.SlackWebHook,
 	}
-	// sendSlackMessage("test")
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
 	pid := pidcheck.AlreadyRunning(pidPath)
 	var LastMessageTs int
@@ -81,10 +80,8 @@ func main() {
 	if !pid {
 		// Infinite loop - get new messages every 5 seconds
 		for {
-			fmt.Println("Tick...")
-			fmt.Println("LastMessageTs:", LastMessageTs)
+			// fmt.Println("Tick...") // * dev code
 			messages, err := getSlackMessages(conf.ChannelToMonitor, strconv.Itoa(LastMessageTs))
-			// spew.Dump(messages)
 			if err != nil {
 				fmt.Println("Error encountered: ", err)
 			}
@@ -96,7 +93,6 @@ func main() {
 				}
 				if currentTs > LastMessageTs {
 					LastMessageTs = currentTs
-					spew.Dump("Message: ", message)
 					if !firstRun {
 						if len(message.Text) > 0 {
 							if analyzeMessage(message.Text) {
@@ -105,7 +101,6 @@ func main() {
 
 						}
 					}
-
 				}
 			}
 
@@ -138,14 +133,20 @@ func analyzeMessage(message string) bool {
 
 // Send a slack message to a channel
 func sendSlackMessage(message slack.Message) {
-	spew.Dump("Posting message: ", message.Text)
+	userData := SlackAPI.GetUserInfo(message.User)
+	timestampSplit := strings.Split(message.Ts, ".")
+	timestampInt, err := strconv.ParseInt(timestampSplit[0], 10, 64)
+	timestamp := time.Unix(timestampInt, 0)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	err := SlackAPI.PostMessage(conf.ChannelToMessage, conf.SlackMessageText)
+	err = SlackAPI.PostMessage(conf.ChannelToMessage, conf.SlackMessageText)
 	if err != nil {
 		spew.Dump(err)
 	}
 
-	err = SlackAPI.PostMessage(conf.ChannelToMessage, "> "+message.User+": "+message.Text)
+	err = SlackAPI.PostMessage(conf.ChannelToMessage, "> <@"+userData.User.ID+"> - "+timestamp.Format("03:04:05 PM")+": \n"+message.Text)
 	if err != nil {
 		spew.Dump(err)
 	}

@@ -1,10 +1,15 @@
 package slack
 
-import "github.com/davecgh/go-spew/spew"
+import (
+	"fmt"
+
+	"github.com/davecgh/go-spew/spew"
+)
 
 // Service is the Slack service
 type Service interface {
 	GetMessages(channel string, timestamp string) (Response, error)
+	GetUserInfo(userid string) Response
 	PostMessage(channel string, text string) error
 }
 
@@ -23,8 +28,20 @@ func (c Client) GetMessages(channel string, timestamp string) (Response, error) 
 }
 
 // GetUserInfo gets all user info for a userID
-func (c Client) GetUserInfo(userid string) UserObject {
-	var userData = UserObject{}
+func (c Client) GetUserInfo(userid string) Response {
+	var userData = Response{}
+	url := "users.info"
+	payload := Payload{
+		token: c.SlackBotToken,
+		user:  userid,
+	}
+
+	err := c.call("GET", url, payload, &userData)
+	spew.Dump(userData)
+
+	if err != nil {
+		fmt.Printf("error getting user info: %e", err)
+	}
 
 	return userData
 }
@@ -41,7 +58,6 @@ func (c Client) PostMessage(channel string, text string) error {
 	var response Response
 
 	err := c.call("POST", url, payload, &response)
-	spew.Dump("POST Response:", response)
 
 	return err
 }

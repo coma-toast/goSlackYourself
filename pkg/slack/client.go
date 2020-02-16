@@ -53,11 +53,14 @@ func (c *Client) call(method string, destination string, payload Payload, target
 	}
 	// spew.Dump("Payload: ", payload)
 	values := url.Values{
-		"token":   {payload.token},
-		"channel": {payload.channel},
-		"oldest":  {payload.oldest},
-		"text":    {payload.text},
-		"user":    {payload.user},
+		"token":    {payload.token},
+		"channel":  {payload.channel},
+		"oldest":   {payload.oldest},
+		"text":     {payload.text},
+		"user":     {payload.user},
+		"as_user":  {"false"},
+		"username": {"Vulture Bot"},
+		"icon_url": {"https://avatars.slack-edge.com/2019-10-15/796442545589_598a1268cc27d484a5ae_512.jpg"},
 	}
 
 	req, err := http.NewRequest(method, destination, nil)
@@ -82,7 +85,7 @@ func (c *Client) call(method string, destination string, payload Payload, target
 	}
 	// spew.Dump("ReponseBody: ", responseBody)
 	//TODO: this can all be one error function, take responseBody and do all the error checks
-	errorTarget := Error{}
+	// errorTarget := Error{}
 
 	err = json.Unmarshal(responseBody, &target)
 	if err != nil {
@@ -92,22 +95,16 @@ func (c *Client) call(method string, destination string, payload Payload, target
 
 	// spew.Dump("ErrorTarget: ", errorTarget)
 
-	if errorTarget.Ok != true {
-		errorTarget.CallResponse = resp
-		return errorTarget
-	}
+	// if errorTarget.Ok != true {
+	// 	errorTarget.CallResponse = resp
+	// 	return errorTarget
+	// }
 	// TODO: ^ to here
 
 	if resp.StatusCode >= 400 {
 		err := fmt.Errorf("Slack HTTP Error: %d", resp.StatusCode)
 		return err
 	}
-	// if target != nil {
-	// 	err = json.Unmarshal(responseBody, target)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	return nil
 }
