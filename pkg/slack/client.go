@@ -59,7 +59,7 @@ func (c *Client) call(method string, destination string, payload Payload, target
 		"text":     {payload.text},
 		"user":     {payload.user},
 		"as_user":  {"false"},
-		"username": {"Vulture Bot"},
+		"username": {c.SlackUser},
 		"icon_url": {"https://avatars.slack-edge.com/2019-10-15/796442545589_598a1268cc27d484a5ae_512.jpg"},
 	}
 
