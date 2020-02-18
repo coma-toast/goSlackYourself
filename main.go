@@ -69,6 +69,7 @@ func main() {
 		SlackBotToken:    conf.SlackBotToken,
 		SlackMessageText: conf.SlackMessageText,
 		SlackToken:       conf.SlackToken,
+		SlackUser:        conf.SlackUser,
 		SlackWebHook:     conf.SlackWebHook,
 	}
 	pidPath := fmt.Sprintf("%s/goVult", conf.PidFilePath)
@@ -146,7 +147,7 @@ func sendSlackMessage(message slack.Message) {
 		spew.Dump(err)
 	}
 
-	err = SlackAPI.PostMessage(conf.ChannelToMessage, "> <@"+userData.User.ID+"> - "+timestamp.Format("03:04:05 PM")+": \n"+message.Text)
+	err = SlackAPI.PostMessage(conf.ChannelToMessage, "> <@"+userData.User.ID+"> - "+timestamp.Format("03:04:05 PM")+": \n> "+message.Text)
 	if err != nil {
 		spew.Dump(err)
 	}

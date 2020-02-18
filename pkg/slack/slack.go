@@ -17,9 +17,10 @@ type Service interface {
 func (c Client) GetMessages(channel string, timestamp string) (Response, error) {
 	var response Response
 	payload := Payload{
-		channel: channel,
-		oldest:  timestamp,
-		token:   c.SlackBotToken,
+		channel:  channel,
+		oldest:   timestamp,
+		token:    c.SlackBotToken,
+		username: c.SlackUser,
 	}
 
 	err := c.call("GET", "channels.history", payload, &response)
